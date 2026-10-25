@@ -2,6 +2,8 @@ import type { QuizOption, Word } from '../types';
 import { labelOf, POS_ORDER } from './data';
 import type { DataBundle, SenseRef } from './data';
 
+export const MAX_WRONG = 3;
+
 export function shuffle<T>(input: T[]): T[] {
   const arr = input.slice();
   for (let i = arr.length - 1; i > 0; i--) {
@@ -51,6 +53,7 @@ function toOptions(correct: SenseRef, distractors: SenseRef[]): QuizOption[] {
   ].map((entry, i) => ({
     key: `${i}:${entry.ref.wordId}:${entry.ref.pos}:${entry.ref.cn}`,
     label: entry.ref.label,
+    word: entry.ref.w,
     pos: entry.ref.pos,
     correct: entry.correct,
   }));

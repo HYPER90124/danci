@@ -19,7 +19,7 @@ export function WrongBook({ data, onStart }: { data: DataBundle; onStart: (ids: 
       <header className="page-head">
         <div>
           <h1>错题本</h1>
-          <p className="muted">同一组练习中错两次会自动加入</p>
+          <p className="muted">一组练习中同一道题错三次会自动加入</p>
         </div>
         <span className="streak-pill">{items.length} 词</span>
       </header>

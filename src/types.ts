@@ -86,6 +86,7 @@ export interface ProgressState {
 export interface QuizOption {
   key: string;
   label: string;
+  word: string;
   pos: string;
   correct: boolean;
 }

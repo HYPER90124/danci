@@ -3,8 +3,11 @@ import { OptionButton, type OptionState } from '../components/OptionButton';
 import { ProgressBar } from '../components/ProgressBar';
 import type { DataBundle } from '../lib/data';
 import { formatDuration, todayStr } from '../lib/date';
-import { buildPosQuestions, type PosQuestion } from '../lib/quiz';
+import { buildPosQuestions, MAX_WRONG, type PosQuestion } from '../lib/quiz';
 import { useStore } from '../lib/store';
+import type { QuizOption } from '../types';
+
+const POS_REQUEUE_GAP = 3;
 
 const POS_LABEL: Record<string, string> = {
   'n.': '名词',
@@ -52,8 +55,9 @@ export function PosStart({ count, onStart }: { count: number; onStart: () => voi
       <section className="card stack-sm">
         <ul className="bullet-list">
           <li>每题给出一个带空格的英文句子</li>
+          <li>选项只显示英文单词，答完后再显示词性和中文释义</li>
           <li>四个选项的词性互不相同，只有一个能填进空里</li>
-          <li>一轮 {count} 题，答完给出词性正确率</li>
+          <li>一轮 {count} 题，错 3 次才跳过并加入错题本</li>
         </ul>
         <button type="button" className="primary" onClick={onStart}>
           开始练习
@@ -63,30 +67,50 @@ export function PosStart({ count, onStart }: { count: number; onStart: () => voi
   );
 }
 
+interface PosItem {
+  question: PosQuestion;
+  errors: number;
+}
+
+interface PosState {
+  queue: PosItem[];
+  index: number;
+  picked: string | null;
+  attempts: number;
+  correct: number;
+}
+
 export function PosQuiz({ data, onExit }: { data: DataBundle; onExit: () => void }) {
-  const [questions] = useState<PosQuestion[]>(() => buildPosQuestions(data, 10));
-  const [index, setIndex] = useState(0);
-  const [picked, setPicked] = useState<string | null>(null);
-  const [attempts, setAttempts] = useState(0);
-  const [correctCount, setCorrectCount] = useState(0);
-  const [done, setDone] = useState(false);
+  const [state, setState] = useState<PosState>(() => ({
+    queue: buildPosQuestions(data, 10).map((question) => ({ question, errors: 0 })),
+    index: 0,
+    picked: null,
+    attempts: 0,
+    correct: 0,
+  }));
   const sessionStart = useRef(Date.now());
   const questionStart = useRef(Date.now());
   const logged = useRef(false);
 
+  const done = state.index >= state.queue.length;
+  const item = done ? null : state.queue[state.index];
+  const question = item?.question ?? null;
+  const correctOption = question?.options.find((option) => option.correct) ?? null;
+  const answered = state.picked !== null;
+
   useEffect(() => {
-    if (!done || logged.current) return;
+    if (!done || !state.queue.length || logged.current) return;
     logged.current = true;
     useStore.getState().logSession({
       date: todayStr(),
       mode: 'pos',
-      total: attempts,
-      correct: correctCount,
+      total: state.attempts,
+      correct: state.correct,
       ms: Date.now() - sessionStart.current,
     });
-  }, [done, attempts, correctCount]);
+  }, [done, state.queue.length, state.attempts, state.correct]);
 
-  if (!questions.length) {
+  if (!state.queue.length) {
     return (
       <div className="app">
         <main className="page stack">
@@ -105,37 +129,8 @@ export function PosQuiz({ data, onExit }: { data: DataBundle; onExit: () => void
     );
   }
 
-  const question = questions[Math.min(index, questions.length - 1)];
-  const correctOption = question.options.find((o) => o.correct)!;
-  const answered = picked !== null;
-
-  const choose = (option: QuizOptionLike) => {
-    if (answered) return;
-    useStore.getState().answer(question.word.id, correctOption.pos, option.correct, Date.now() - questionStart.current);
-    setPicked(option.key);
-    setAttempts((n) => n + 1);
-    if (option.correct) setCorrectCount((n) => n + 1);
-  };
-
-  const next = () => {
-    if (index + 1 >= questions.length) {
-      setDone(true);
-      return;
-    }
-    setIndex((i) => i + 1);
-    setPicked(null);
-    questionStart.current = Date.now();
-  };
-
-  const optionState = (option: QuizOptionLike): OptionState => {
-    if (!answered) return 'idle';
-    if (option.correct) return 'correct';
-    if (option.key === picked) return 'wrong';
-    return 'muted';
-  };
-
   if (done) {
-    const accuracy = attempts ? Math.round((correctCount / attempts) * 100) : 0;
+    const accuracy = state.attempts ? Math.round((state.correct / state.attempts) * 100) : 0;
     return (
       <div className="app">
         <main className="page stack">
@@ -147,15 +142,15 @@ export function PosQuiz({ data, onExit }: { data: DataBundle; onExit: () => void
             <p className="muted">词性题正确率</p>
             <div className="result-grid">
               <div>
-                <strong>{attempts}</strong>
-                <span className="muted">题数</span>
+                <strong>{state.attempts}</strong>
+                <span className="muted">作答</span>
               </div>
               <div>
-                <strong>{correctCount}</strong>
+                <strong>{state.correct}</strong>
                 <span className="muted">正确</span>
               </div>
               <div>
-                <strong>{attempts - correctCount}</strong>
+                <strong>{state.attempts - state.correct}</strong>
                 <span className="muted">错误</span>
               </div>
             </div>
@@ -169,6 +164,48 @@ export function PosQuiz({ data, onExit }: { data: DataBundle; onExit: () => void
     );
   }
 
+  if (!question || !correctOption || !item) return null;
+
+  const choose = (option: QuizOption) => {
+    if (answered) return;
+    const store = useStore.getState();
+    store.answer(question.word.id, correctOption.pos, option.correct, Date.now() - questionStart.current);
+
+    let queue = state.queue;
+    if (!option.correct) {
+      const errors = item.errors + 1;
+      if (errors >= MAX_WRONG) {
+        store.addToWrongBook(question.word.id);
+        queue = queue.map((entry, i) => (i === state.index ? { ...entry, errors } : entry));
+      } else {
+        const at = Math.min(state.index + POS_REQUEUE_GAP + 1, queue.length);
+        queue = [...queue.slice(0, at), { question, errors }, ...queue.slice(at)];
+      }
+    }
+
+    setState((prev) => ({
+      ...prev,
+      queue,
+      picked: option.key,
+      attempts: prev.attempts + 1,
+      correct: prev.correct + (option.correct ? 1 : 0),
+    }));
+  };
+
+  const next = () => {
+    questionStart.current = Date.now();
+    setState((prev) => ({ ...prev, index: prev.index + 1, picked: null }));
+  };
+
+  const optionState = (option: QuizOption): OptionState => {
+    if (!answered) return 'idle';
+    if (option.correct) return 'correct';
+    if (option.key === state.picked) return 'wrong';
+    return 'muted';
+  };
+
+  const isCorrect = state.picked === correctOption.key;
+
   return (
     <div className="app">
       <main className="page stack">
@@ -177,11 +214,11 @@ export function PosQuiz({ data, onExit }: { data: DataBundle; onExit: () => void
             退出
           </button>
           <span className="muted">
-            第 {index + 1} / {questions.length} 题
+            词性模式 · 第 {state.index + 1} / {state.queue.length} 题
           </span>
-          <span className="muted">正确 {correctCount}</span>
+          <span className="muted">正确 {state.correct}</span>
         </header>
-        <ProgressBar value={index / questions.length} />
+        <ProgressBar value={state.index / state.queue.length} />
 
         <section className="card sentence-card">
           <Sentence text={question.sentence.text} answer={answered ? question.word.w : undefined} />
@@ -197,20 +234,27 @@ export function PosQuiz({ data, onExit }: { data: DataBundle; onExit: () => void
               state={optionState(option)}
               disabled={answered}
               onClick={() => choose(option)}
+              text={option.word}
+              sub={answered ? option.label : undefined}
             />
           ))}
         </div>
 
         {answered ? (
-          <div className={`feedback ${picked === correctOption.key ? 'is-correct' : 'is-wrong'}`}>
+          <div className={`feedback ${isCorrect ? 'is-correct' : 'is-wrong'}`}>
             <div>
-              <strong>{picked === correctOption.key ? '回答正确' : '回答错误'}</strong>
+              <strong>{isCorrect ? '回答正确' : '回答错误'}</strong>
               <p className="muted small">
-                这个空需要 {posName(correctOption.pos)}，正确答案是 {question.word.w}。
+                这个空需要 {posName(correctOption.pos)}，正确答案是 {correctOption.word}（{correctOption.label}）。
               </p>
+              {!isCorrect ? (
+                <p className="muted small">
+                  {item.errors >= MAX_WRONG ? '已加入错题本' : '稍后会再次出现'}
+                </p>
+              ) : null}
             </div>
             <button type="button" className="secondary" onClick={next}>
-              {index + 1 >= questions.length ? '查看结果' : '下一题'}
+              {state.index + 1 >= state.queue.length ? '查看结果' : '下一题'}
             </button>
           </div>
         ) : null}
@@ -218,5 +262,3 @@ export function PosQuiz({ data, onExit }: { data: DataBundle; onExit: () => void
     </div>
   );
 }
-
-type QuizOptionLike = PosQuestion['options'][number];

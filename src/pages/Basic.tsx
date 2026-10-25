@@ -3,7 +3,7 @@ import { OptionButton, type OptionState } from '../components/OptionButton';
 import { ProgressBar } from '../components/ProgressBar';
 import type { DataBundle } from '../lib/data';
 import { formatDuration, todayStr } from '../lib/date';
-import { makeBasicOptions, shuffle } from '../lib/quiz';
+import { makeBasicOptions, MAX_WRONG, shuffle } from '../lib/quiz';
 import { useStore } from '../lib/store';
 import type { QuizOption } from '../types';
 
@@ -112,7 +112,7 @@ export function Basic({
     let errors = current.errors;
     if (!option.correct) {
       errors += 1;
-      if (errors >= 2) {
+      if (errors >= MAX_WRONG) {
         store.addToWrongBook(current.id);
         queue = queue.map((item, i) => (i === state.index ? { ...item, errors } : item));
       } else {
@@ -192,7 +192,7 @@ export function Basic({
   const remaining = total - state.index;
   const wrongMessage =
     state.feedback === 'wrong'
-      ? current.errors >= 2
+      ? current.errors >= MAX_WRONG
         ? '已加入错题本'
         : '稍后会再次出现'
       : '';

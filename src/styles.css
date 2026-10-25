@@ -440,6 +440,24 @@ ul {
   transition: transform 0.08s ease, border-color 0.15s ease, background 0.15s ease;
 }
 
+.option-main {
+  display: block;
+}
+
+.option-sub {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.option.is-correct .option-sub,
+.option.is-wrong .option-sub {
+  color: inherit;
+  opacity: 0.85;
+}
+
 .option:active {
   transform: scale(0.99);
 }
@@ -474,6 +492,11 @@ ul {
   padding: 12px 14px;
   border-radius: 12px;
   font-size: 14px;
+}
+
+.feedback > button {
+  flex: none;
+  white-space: nowrap;
 }
 
 .feedback.is-correct {
