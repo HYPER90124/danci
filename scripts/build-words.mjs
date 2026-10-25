@@ -200,14 +200,25 @@ const MORPH_RULES = [
   [/est$/, ''],
 ];
 
-function lookupCandidates(display) {
+function directCandidates(display) {
   const out = new Set();
   const push = (s) => { const v = s.trim().toLowerCase(); if (v) out.add(v); };
   push(display);
   const fixed = ENTRY_FIXES[display.trim().toLowerCase()];
-  if (fixed) push(fixed);
-  for (const part of display.split('/')) push(part);
-  for (const part of display.split('/')) push(part.replace(/-/g, ' '));
+  if (fixed) {
+    push(fixed);
+    for (const part of fixed.split('/')) push(part);
+  }
+  for (const part of display.split('/')) {
+    push(part);
+    push(part.replace(/-/g, ' '));
+  }
+  return [...out];
+}
+
+function morphCandidates(display) {
+  const out = new Set();
+  const push = (s) => { const v = s.trim().toLowerCase(); if (v) out.add(v); };
   for (const part of display.split('/')) {
     const base = part.trim().toLowerCase();
     for (const [re, rep] of MORPH_RULES) {
@@ -220,14 +231,19 @@ function lookupCandidates(display) {
 function findEntries(dict, display) {
   const hits = [];
   const seen = new Set();
-  for (const key of lookupCandidates(display)) {
+  for (const key of directCandidates(display)) {
     const hit = dict.get(key);
     if (hit && hit.translation && !seen.has(hit.word)) {
       seen.add(hit.word);
       hits.push(hit);
     }
   }
-  return hits;
+  if (hits.length) return hits;
+  for (const key of morphCandidates(display)) {
+    const hit = dict.get(key);
+    if (hit && hit.translation) return [hit];
+  }
+  return [];
 }
 
 function readJson(file, fallback) {
