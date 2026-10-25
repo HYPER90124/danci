@@ -5,12 +5,14 @@ import { useStore } from './lib/store';
 import { Basic } from './pages/Basic';
 import { Home } from './pages/Home';
 import { PosQuiz, PosStart } from './pages/PosQuiz';
+import { Preview } from './pages/Preview';
 import { SettingsPage } from './pages/Settings';
 import { Stats } from './pages/Stats';
 import { WrongBook } from './pages/WrongBook';
 
 type Screen =
   | { type: 'tabs' }
+  | { type: 'preview'; ids: string[]; title: string; mode: 'basic' | 'wrong' }
   | { type: 'basic'; ids: string[]; title: string; mode: 'basic' | 'wrong' }
   | { type: 'pos' };
 
@@ -56,6 +58,20 @@ export default function App() {
     );
   }
 
+  if (screen.type === 'preview') {
+    return (
+      <Preview
+        data={data}
+        ids={screen.ids}
+        title={screen.title}
+        onStart={() =>
+          setScreen({ type: 'basic', ids: screen.ids, title: screen.title, mode: screen.mode })
+        }
+        onExit={() => setScreen({ type: 'tabs' })}
+      />
+    );
+  }
+
   if (screen.type === 'basic') {
     return (
       <Basic
@@ -78,7 +94,7 @@ export default function App() {
         {tab === 'home' ? (
           <Home
             data={data}
-            onStart={(ids, title, mode) => setScreen({ type: 'basic', ids, title, mode })}
+            onStart={(ids, title, mode) => setScreen({ type: 'preview', ids, title, mode })}
             onGo={setTab}
           />
         ) : null}
@@ -86,7 +102,7 @@ export default function App() {
         {tab === 'wrong' ? (
           <WrongBook
             data={data}
-            onStart={(ids) => setScreen({ type: 'basic', ids, title: '错题复习', mode: 'wrong' })}
+            onStart={(ids) => setScreen({ type: 'preview', ids, title: '错题复习', mode: 'wrong' })}
           />
         ) : null}
         {tab === 'stats' ? <Stats data={data} /> : null}
