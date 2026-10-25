@@ -40,9 +40,17 @@ npm run preview
 
 ## 部署到 GitHub Pages
 
-1. 新建公开仓库（默认名 `danci`），推送到 `main`。
-2. 仓库 Settings → Pages → Source 选 **GitHub Actions**。
-3. Actions 运行完成后访问 `https://<用户名>.github.io/<仓库名>/`。
-4. 手机浏览器打开后「添加到主屏幕」。
+默认使用 `gh-pages` 分支部署，不需要额外权限：
+
+```bash
+npm run deploy        # 构建并把 dist 推到 gh-pages 分支
+```
+
+首次部署后，在仓库 Settings → Pages → Source 选择 `gh-pages` 分支，然后访问
+`https://<用户名>.github.io/<仓库名>/`，手机浏览器「添加到主屏幕」即可。
+
+如果希望改用 GitHub Actions 自动部署，把 `.github/deploy.yml.example` 复制为
+`.github/workflows/deploy.yml` 并提交（需要 token 具备 `workflow` scope），
+然后在 Settings → Pages 选择 **GitHub Actions**。
 
 `vite.config.ts` 使用 `base: './'`，资源按相对路径加载，仓库名可以任意。
