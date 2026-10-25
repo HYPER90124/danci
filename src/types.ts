@@ -69,7 +69,6 @@ export interface SessionStat {
 }
 
 export interface Settings {
-  batchSize: number;
   dailyGoal: number;
   theme: 'auto' | 'light' | 'dark';
 }

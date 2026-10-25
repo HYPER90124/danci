@@ -24,7 +24,7 @@ export function planSession(count: number, data: DataBundle, progress: ProgressS
 
   const duePick = shuffle(due).slice(0, count);
   const wrongPick = shuffle(wrong).slice(0, count - duePick.length);
-  const freshPick = fresh.slice(0, count - duePick.length - wrongPick.length);
+  const freshPick = shuffle(fresh).slice(0, count - duePick.length - wrongPick.length);
   const ids = shuffle([...duePick, ...wrongPick, ...freshPick]);
 
   return { ids, review: duePick.length + wrongPick.length, fresh: freshPick.length };

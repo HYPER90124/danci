@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { BatchSlider } from '../components/BatchSlider';
 import { Ring } from '../components/Ring';
 import type { DataBundle } from '../lib/data';
 import { todayStr } from '../lib/date';
@@ -7,6 +6,8 @@ import { planSession } from '../lib/session';
 import { computeTotals } from '../lib/stats';
 import { useStore } from '../lib/store';
 import type { TabKey } from '../components/TabBar';
+
+const GROUP_SIZE = 20;
 
 export function Home({
   data,
@@ -17,18 +18,16 @@ export function Home({
   onStart: (ids: string[], title: string, mode: 'basic' | 'wrong') => void;
   onGo: (tab: TabKey) => void;
 }) {
-  const settings = useStore((s) => s.settings);
   const progress = useStore((s) => s.words);
   const daily = useStore((s) => s.daily);
   const streak = useStore((s) => s.streak);
-  const updateSettings = useStore((s) => s.updateSettings);
 
   const totals = useMemo(() => computeTotals(progress, data.words.length), [progress, data.words.length]);
-  const plan = useMemo(() => planSession(settings.batchSize, data, progress), [settings.batchSize, data, progress]);
+  const plan = useMemo(() => planSession(GROUP_SIZE, data, progress), [data, progress]);
   const today = daily[todayStr()];
   const doneToday = today?.total ?? 0;
-  const goal = Math.max(1, settings.dailyGoal);
-  const percent = Math.min(1, doneToday / goal);
+  const goal = useStore((s) => s.settings.dailyGoal);
+  const percent = Math.min(1, doneToday / Math.max(1, goal));
 
   return (
     <div className="stack">
@@ -64,7 +63,10 @@ export function Home({
       </section>
 
       <section className="card">
-        <BatchSlider value={settings.batchSize} onChange={(value) => updateSettings({ batchSize: value })} />
+        <div className="section-head">
+          <h2>本次学习</h2>
+          <span className="muted small">随机词序 · 每组 {GROUP_SIZE} 词</span>
+        </div>
         <div className="plan-row">
           <span className="chip">复习 {plan.review}</span>
           <span className="chip">新词 {plan.fresh}</span>
@@ -78,6 +80,7 @@ export function Home({
         >
           开始学习
         </button>
+        <p className="muted small center hint-line">每组先预习 20 词，答完这一组才会进入下一组</p>
         {plan.ids.length === 0 ? <p className="muted center">没有待学单词了，明天再来或去词性模式巩固。</p> : null}
       </section>
 

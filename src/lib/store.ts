@@ -7,7 +7,7 @@ import { intervalFor, nextStage } from './srs';
 export function emptyProgress(): ProgressState {
   return {
     version: 1,
-    settings: { batchSize: 20, dailyGoal: 30, theme: 'auto' },
+    settings: { dailyGoal: 30, theme: 'auto' },
     words: {},
     daily: {},
     sessions: [],

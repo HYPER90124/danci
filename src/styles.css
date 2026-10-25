@@ -258,6 +258,10 @@ ul {
   font-size: 14px;
 }
 
+.wide {
+  width: 100%;
+}
+
 .ghost.small {
   padding: 4px 8px;
   font-size: 13px;
@@ -348,6 +352,10 @@ ul {
   color: var(--primary);
   font-size: 12px;
   font-weight: 600;
+}
+
+.hint-line {
+  margin-top: 8px;
 }
 
 .chip.muted {

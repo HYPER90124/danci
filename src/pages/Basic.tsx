@@ -41,13 +41,19 @@ export function Basic({
   data,
   ids,
   title,
+  groupLabel,
   mode,
+  hasNext,
+  onNext,
   onExit,
 }: {
   data: DataBundle;
   ids: string[];
   title: string;
+  groupLabel: string;
   mode: 'basic' | 'wrong';
+  hasNext: boolean;
+  onNext: () => void;
   onExit: () => void;
 }) {
   const [state, setState] = useState<SessionState>(() => buildInitial(ids, data));
@@ -139,7 +145,10 @@ export function Basic({
       <div className="app">
         <main className="page stack">
           <header className="page-head">
-            <h1>本次完成</h1>
+            <div>
+              <h1>本组完成</h1>
+              <p className="muted">{groupLabel}</p>
+            </div>
           </header>
           <section className="card center stack-sm">
             <div className="big-number">{accuracy}%</div>
@@ -159,9 +168,20 @@ export function Basic({
               </div>
             </div>
             <p className="muted">用时 {formatDuration(elapsed)}</p>
-            <button type="button" className="primary" onClick={onExit}>
-              返回
-            </button>
+            {hasNext ? (
+              <>
+                <button type="button" className="primary" onClick={onNext}>
+                  下一组预习
+                </button>
+                <button type="button" className="secondary wide" onClick={onExit}>
+                  返回
+                </button>
+              </>
+            ) : (
+              <button type="button" className="primary" onClick={onExit}>
+                返回
+              </button>
+            )}
           </section>
         </main>
       </div>
@@ -184,7 +204,9 @@ export function Basic({
           <button type="button" className="ghost" onClick={onExit}>
             退出
           </button>
-          <span className="muted">{title}</span>
+          <span className="muted">
+            {title} · {groupLabel}
+          </span>
           <span className="muted">剩余 {remaining}</span>
         </header>
         <ProgressBar value={state.index / total} />

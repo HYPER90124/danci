@@ -1,28 +1,23 @@
-import { useState } from 'react';
 import type { DataBundle } from '../lib/data';
-
-const GROUP_SIZE = 20;
 
 export function Preview({
   data,
   ids,
   title,
+  groupLabel,
   onStart,
   onExit,
 }: {
   data: DataBundle;
   ids: string[];
   title: string;
+  groupLabel: string;
   onStart: () => void;
   onExit: () => void;
 }) {
-  const [page, setPage] = useState(0);
-  const pages = Math.max(1, Math.ceil(ids.length / GROUP_SIZE));
-  const group = ids
-    .slice(page * GROUP_SIZE, page * GROUP_SIZE + GROUP_SIZE)
+  const words = ids
     .map((id) => data.byId.get(id))
     .filter((word): word is NonNullable<typeof word> => Boolean(word));
-  const isLast = page >= pages - 1;
 
   return (
     <div className="app">
@@ -32,17 +27,13 @@ export function Preview({
             退出
           </button>
           <span className="muted">{title} · 预习</span>
-          <span className="muted">
-            {page + 1} / {pages} 组
-          </span>
+          <span className="muted">{groupLabel}</span>
         </header>
 
-        <p className="muted small center">
-          先过一遍这组单词，共 {ids.length} 词，每 {GROUP_SIZE} 词一组
-        </p>
+        <p className="muted small center">本组 {words.length} 词，先过一遍再开始答题</p>
 
         <ul className="preview-list">
-          {group.map((word) => (
+          {words.map((word) => (
             <li key={word.id} className="preview-item">
               <div className="preview-word">
                 {word.w}
@@ -56,20 +47,9 @@ export function Preview({
         </ul>
 
         <div className="preview-actions">
-          {page > 0 ? (
-            <button type="button" className="secondary" onClick={() => setPage((n) => n - 1)}>
-              上一组
-            </button>
-          ) : null}
-          {isLast ? (
-            <button type="button" className="primary" onClick={onStart}>
-              开始答题
-            </button>
-          ) : (
-            <button type="button" className="primary" onClick={() => setPage((n) => n + 1)}>
-              下一组（{page + 2} / {pages}）
-            </button>
-          )}
+          <button type="button" className="primary" onClick={onStart}>
+            开始答题
+          </button>
         </div>
       </main>
     </div>

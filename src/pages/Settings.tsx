@@ -1,5 +1,4 @@
 import { useRef, useState } from 'react';
-import { BatchSlider } from '../components/BatchSlider';
 import { todayStr } from '../lib/date';
 import { useStore } from '../lib/store';
 import type { ProgressState } from '../types';
@@ -62,7 +61,7 @@ export function SettingsPage() {
       </header>
 
       <section className="card stack-sm">
-        <BatchSlider value={settings.batchSize} onChange={(value) => updateSettings({ batchSize: value })} />
+        <p className="muted small">学习固定为每组 20 词：先预习，再答题，完成一组后进入下一组。</p>
         <label className="field">
           <span>每日目标</span>
           <input
