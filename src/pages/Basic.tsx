@@ -7,6 +7,8 @@ import { makeBasicOptions, shuffle } from '../lib/quiz';
 import { useStore } from '../lib/store';
 import type { QuizOption } from '../types';
 
+const REQUEUE_GAP = 10;
+
 interface Item {
   id: string;
   errors: number;
@@ -108,7 +110,7 @@ export function Basic({
         store.addToWrongBook(current.id);
         queue = queue.map((item, i) => (i === state.index ? { ...item, errors } : item));
       } else {
-        const at = Math.min(state.index + 3, queue.length);
+        const at = Math.min(state.index + REQUEUE_GAP + 1, queue.length);
         queue = [...queue.slice(0, at), { id: current.id, errors }, ...queue.slice(at)];
       }
     }
