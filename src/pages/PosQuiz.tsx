@@ -55,8 +55,9 @@ export function PosStart({ count, onStart }: { count: number; onStart: () => voi
       <section className="card stack-sm">
         <ul className="bullet-list">
           <li>每题给出一个带空格的英文句子</li>
-          <li>选项只显示英文单词，答完后再显示词性和中文释义</li>
+          <li>选项只显示英文单词，答完后再显示词性、中文释义和整句翻译</li>
           <li>四个选项的词性互不相同，只有一个能填进空里</li>
+          <li>例句为真实中英句对，填空词均为四级核心词汇</li>
           <li>一轮 {count} 题，错 3 次才跳过并加入错题本</li>
         </ul>
         <button type="button" className="primary" onClick={onStart}>
@@ -82,7 +83,7 @@ interface PosState {
 
 export function PosQuiz({ data, onExit }: { data: DataBundle; onExit: () => void }) {
   const [state, setState] = useState<PosState>(() => ({
-    queue: buildPosQuestions(data, 10).map((question) => ({ question, errors: 0 })),
+    queue: buildPosQuestions(data, 50).map((question) => ({ question, errors: 0 })),
     index: 0,
     picked: null,
     attempts: 0,
@@ -221,8 +222,13 @@ export function PosQuiz({ data, onExit }: { data: DataBundle; onExit: () => void
         <ProgressBar value={state.index / state.queue.length} />
 
         <section className="card sentence-card">
-          <Sentence text={question.sentence.text} answer={answered ? question.word.w : undefined} />
-          {question.sentence.zh ? <p className="muted small">{question.sentence.zh}</p> : null}
+          <Sentence
+            text={question.sentence.text}
+            answer={answered ? question.sentence.surface ?? question.word.w : undefined}
+          />
+          {answered && question.sentence.zh ? (
+            <p className="translation">译文：{question.sentence.zh}</p>
+          ) : null}
         </section>
 
         <p className="question-hint">选出能填入空格的单词</p>

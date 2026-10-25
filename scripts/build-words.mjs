@@ -276,6 +276,7 @@ async function main() {
     let senses = [];
     let src = 'ecdict';
     let phon = '';
+    let meta = null;
     const ov = overrides[display] || overrides[key];
     if (Array.isArray(ov) && ov.length) {
       senses = ov;
@@ -296,6 +297,7 @@ async function main() {
         }
         senses = merged.slice(0, 4);
         phon = entries.find((entry) => entry.phonetic)?.phonetic || '';
+        meta = entries[0];
         if (!senses.length) {
           const sup = supplement[display] || supplement[key];
           if (Array.isArray(sup) && sup.length) { senses = sup; src = 'supplement'; }
@@ -314,6 +316,7 @@ async function main() {
     let suffix = 2;
     while (usedIds.has(id)) id = `${baseId}-${suffix++}`;
     usedIds.add(id);
+    const core = Boolean(meta && ((meta.frq > 0 && meta.frq <= 5000) || meta.collins >= 3));
     words.push({
       id,
       w: display,
@@ -321,6 +324,8 @@ async function main() {
       rank: words.length + 1,
       senses,
       src,
+      ...(meta && meta.frq ? { frq: meta.frq } : {}),
+      core,
     });
   }
 

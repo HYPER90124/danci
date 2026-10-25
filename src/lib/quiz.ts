@@ -1,5 +1,5 @@
 import type { QuizOption, Word } from '../types';
-import { labelOf, POS_ORDER } from './data';
+import { labelOf } from './data';
 import type { DataBundle, SenseRef } from './data';
 
 export const MAX_WRONG = 3;
@@ -69,18 +69,18 @@ export function makeBasicOptions(word: Word, data: DataBundle): QuizOption[] {
 
 export interface PosQuestion {
   word: Word;
-  sentence: { text: string; pos: string; zh?: string };
+  sentence: { text: string; pos: string; zh?: string; surface?: string };
   options: QuizOption[];
 }
 
-export function makePosOptions(correct: SenseRef, data: DataBundle): QuizOption[] {
-  const positions = shuffle(
-    POS_ORDER.filter((p) => p !== correct.pos && (data.byPos.get(p)?.length ?? 0) > 0),
-  ).slice(0, 3);
+const POS_QUIZ_CONTENT = ['n.', 'v.', 'adj.', 'adv.'];
 
+export function makePosOptions(correct: SenseRef, data: DataBundle): QuizOption[] {
+  const positions = POS_QUIZ_CONTENT.filter((p) => p !== correct.pos);
   const distractors: SenseRef[] = [];
+
   for (const pos of positions) {
-    const pool = shuffle(data.byPos.get(pos) ?? []).slice(0, 60);
+    const pool = shuffle(data.coreByPos.get(pos) ?? []);
     const hit = pool.find(
       (c) =>
         c.wordId !== correct.wordId &&
@@ -91,10 +91,10 @@ export function makePosOptions(correct: SenseRef, data: DataBundle): QuizOption[
   }
 
   if (distractors.length < 3) {
-    const used = new Set(distractors.map((d) => d.pos));
-    for (const candidate of shuffle(data.senses)) {
+    const used = new Set([correct.pos, ...distractors.map((d) => d.pos)]);
+    for (const candidate of shuffle([...data.coreByPos.values()].flat())) {
       if (distractors.length >= 3) break;
-      if (candidate.pos === correct.pos || used.has(candidate.pos)) continue;
+      if (used.has(candidate.pos)) continue;
       if (candidate.wordId === correct.wordId || similar(candidate.cn, correct.cn)) continue;
       if (distractors.some((d) => similar(d.cn, candidate.cn))) continue;
       used.add(candidate.pos);
@@ -111,7 +111,7 @@ export function buildPosQuestions(data: DataBundle, count: number): PosQuestion[
   for (const word of candidates) {
     if (out.length >= count) break;
     const sentences = (data.sentences[word.id] ?? []).filter(
-      (s) => s.text.includes('____') && word.senses.some((x) => x.pos === s.pos),
+      (s) => s.text.includes('____') && Boolean(s.zh) && word.senses.some((x) => x.pos === s.pos),
     );
     if (!sentences.length) continue;
     const sentence = sentences[Math.floor(Math.random() * sentences.length)];
@@ -126,7 +126,12 @@ export function buildPosQuestions(data: DataBundle, count: number): PosQuestion[
     };
     out.push({
       word,
-      sentence: { text: sentence.text, pos: sentence.pos, ...(sentence.zh ? { zh: sentence.zh } : {}) },
+      sentence: {
+        text: sentence.text,
+        pos: sentence.pos,
+        ...(sentence.zh ? { zh: sentence.zh } : {}),
+        ...(sentence.surface ? { surface: sentence.surface } : {}),
+      },
       options: makePosOptions(correct, data),
     });
   }

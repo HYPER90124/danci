@@ -24,6 +24,8 @@ export interface Word {
   rank: number;
   senses: Sense[];
   src: 'ecdict' | 'override' | 'supplement';
+  frq?: number;
+  core?: boolean;
 }
 
 export interface WordData {
@@ -34,8 +36,9 @@ export interface WordData {
 export interface Sentence {
   text: string;
   pos: string;
-  src: 'tatoeba' | 'template';
+  src: 'tatoeba';
   zh?: string;
+  surface?: string;
 }
 
 export type SentenceBank = Record<string, Sentence[]>;

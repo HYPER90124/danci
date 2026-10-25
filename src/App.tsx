@@ -148,7 +148,7 @@ export default function App() {
             onGo={setTab}
           />
         ) : null}
-        {tab === 'pos' ? <PosStart count={10} onStart={() => setScreen({ type: 'pos' })} /> : null}
+        {tab === 'pos' ? <PosStart count={50} onStart={() => setScreen({ type: 'pos' })} /> : null}
         {tab === 'wrong' ? (
           <WrongBook
             data={data}
