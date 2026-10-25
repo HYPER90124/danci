@@ -1,0 +1,28 @@
+{
+  "a/an": [{ "pos": "art.", "cn": "一（个）；每一（个）" }],
+  "affordable": [{ "pos": "adj.", "cn": "负担得起的" }],
+  "app": [{ "pos": "n.", "cn": "应用程序" }],
+  "contraction": [{ "pos": "n.", "cn": "收缩；缩写" }],
+  "cyberspace": [{ "pos": "n.", "cn": "网络空间" }],
+  "download": [
+    { "pos": "v.", "cn": "下载" },
+    { "pos": "n.", "cn": "下载的文件" }
+  ],
+  "durability": [{ "pos": "n.", "cn": "耐久性；耐用性" }],
+  "facilitation": [{ "pos": "n.", "cn": "促进；便利化" }],
+  "Internet/internet": [{ "pos": "n.", "cn": "互联网；因特网" }],
+  "laptop": [{ "pos": "n.", "cn": "笔记本电脑" }],
+  "logo": [{ "pos": "n.", "cn": "标志；徽标" }],
+  "microwavable": [{ "pos": "adj.", "cn": "可用微波炉加热的" }],
+  "online": [
+    { "pos": "adj.", "cn": "在线的；联网的" },
+    { "pos": "adv.", "cn": "在线地" }
+  ],
+  "quantification": [{ "pos": "n.", "cn": "量化；定量" }],
+  "résumé": [{ "pos": "n.", "cn": "简历" }],
+  "trademark": [{ "pos": "n.", "cn": "商标" }],
+  "upload": [
+    { "pos": "v.", "cn": "上传" },
+    { "pos": "n.", "cn": "上传的数据" }
+  ]
+}
